@@ -612,6 +612,244 @@ SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
 }
 */
 
+bool 
+SamplePlayer::isRTaHole(Vector2D P){
+    // This method is only for rounded tens
+    // Returns true iff rounded-ten point is a hole    
+    int normalX = static_cast<int>(abs(P.x)/10);
+    int normalY = static_cast<int>(abs(P.y)/10);
+    if(normalX%2==normalY%2)
+        return true;
+    else
+        return false;
+}
+
+
+Vector2D 
+SamplePlayer::RoundToNearestHole(Vector2D P){
+    Vector2D roundedTens = RoundToNearestTens(P);
+    if(isRTaHole(roundedTens)){
+        return roundedTens;
+    }
+    else{
+        Vector2D roundedHole;
+        double diffX = P.x-roundedTens.x;
+        double diffY = P.y-roundedTens.y;
+            
+        if(abs(diffX)<abs(diffY)){
+            //Point closer to vertical axis of the diamond
+            if(diffY>0)
+                roundedHole = Vector2D(roundedTens.x, roundedTens.y+10);
+            else
+                roundedHole = Vector2D(roundedTens.x, roundedTens.y-10);
+        }
+        else{
+            //Point closer to horizontal axis of the diamond
+            if(diffX>0)
+                roundedHole = Vector2D(roundedTens.x+10, roundedTens.y);
+            else
+                roundedHole = Vector2D(roundedTens.x-10, roundedTens.y);
+        }
+            return roundedHole;
+    }
+}
+
+
+Vector2D 
+SamplePlayer::RoundToNearestTens(Vector2D P){
+    // This method rounds a given position to its nearest tens - for example, the rounded position for (12, -17) would be (10, -20)
+    // This helps in locating nearby holes more easily
+    double multX = 10.00;
+    double multY = 10.00;
+    if(P.x<0.00)
+        multX = -10.00;
+    if(P.y<0.00)
+        multY = -10.00;
+    int roundX = static_cast<int>((abs(P.x)+5.00)/10);
+    int roundY = static_cast<int>((abs(P.y)+5.00)/10);
+    Vector2D roundedTens = Vector2D(multX*roundX, multY*roundY);
+    return roundedTens;
+}
+
+
+bool
+SamplePlayer::PassToBestPlayer( PlayerAgent * agent ){
+    //std::cout<<"*************************"<<std::endl;
+    //Bhv_BasicOffensiveKick().execute(agent);
+    //return true;
+    const WorldModel & wm = agent->world();
+
+    Vector2D myPosition = wm.self().pos();
+    Vector2D currentHole = RoundToNearestHole(myPosition);
+    // Player position according to nearest current hole
+    Vector2D frontup = Vector2D(currentHole.x+12, currentHole.y-12);
+    Vector2D backup = Vector2D(currentHole.x-12, currentHole.y-12);
+    Vector2D frontdown = Vector2D(currentHole.x+12, currentHole.y+12);
+    Vector2D backdown = Vector2D(currentHole.x-12, currentHole.y+12);
+
+    Vector2D fronthor = Vector2D(currentHole.x+22, currentHole.y);
+    Vector2D backhor = Vector2D(currentHole.x-22, currentHole.y);
+    Vector2D upvert = Vector2D(currentHole.x, currentHole.y-22);
+    Vector2D downvert = Vector2D(currentHole.x, currentHole.y+22);
+    
+    double buffer = 2.5;
+    double buf_degree = 25;
+
+    if(IsOccupiedForPassing(agent, fronthor, buffer) && IsSectorEmpty(agent, fronthor, buf_degree))
+        return PassToPlayer(agent, fronthor, IsOccupiedForPassing(agent, fronthor, buffer));
+
+    if(IsOccupiedForPassing(agent, frontdown, buffer) && IsSectorEmpty(agent, frontdown, buf_degree))
+        return PassToPlayer(agent, frontdown, IsOccupiedForPassing(agent, frontdown, buffer));
+
+    if(IsOccupiedForPassing(agent, frontup, buffer) && IsSectorEmpty(agent, frontup, buf_degree))
+        return PassToPlayer(agent, frontup, IsOccupiedForPassing(agent, frontup, buffer));
+        
+    if(IsOccupiedForPassing(agent, upvert, buffer) && IsSectorEmpty(agent, upvert, buf_degree))
+        return PassToPlayer(agent, upvert, IsOccupiedForPassing(agent, upvert, buffer));
+    
+    if(IsOccupiedForPassing(agent, downvert, buffer) && IsSectorEmpty(agent, downvert, buf_degree))
+        return PassToPlayer(agent, downvert, IsOccupiedForPassing(agent, downvert, buffer));
+
+    if(IsOccupiedForPassing(agent, backup, buffer) && IsSectorEmpty(agent, backup, buf_degree))
+        return PassToPlayer(agent, backup, IsOccupiedForPassing(agent, backup, buffer));
+        
+    if(IsOccupiedForPassing(agent, backdown, buffer) && IsSectorEmpty(agent, backdown, buf_degree))
+        return PassToPlayer(agent, backdown, IsOccupiedForPassing(agent, backdown, buffer));
+
+    if(IsOccupiedForPassing(agent, backhor, buffer) && IsSectorEmpty(agent, backhor, buf_degree))
+        return PassToPlayer(agent, backhor, IsOccupiedForPassing(agent, backhor, buffer));            
+
+
+    
+    return false;
+}
+
+
+bool
+SamplePlayer::PassToPlayer( PlayerAgent * agent, Vector2D target_point, int receiver )
+{
+    if ( ! agent->world().self().isKickable() || receiver < 1)
+    {
+        return false;
+    }
+
+    /*
+    if ( Bhv_ChainAction().execute( agent ) )
+    {
+        return true;
+    }
+    */
+
+    double first_speed = ServerParam::i().ballSpeedMax()/1.1;
+
+    // evaluation
+    //   judge situation
+    //   decide max kick step
+
+    agent->debugClient().addMessage( "pass" );
+    agent->debugClient().setTarget( target_point );
+
+    int kick_step = ( agent->world().gameMode().type() != GameMode::PlayOn
+                      && agent->world().gameMode().type() != GameMode::GoalKick_
+                      ? 1
+                      : 3 );
+    if ( ! Body_SmartKick( target_point,
+                           first_speed,
+                           first_speed * 0.96,
+                           kick_step ).execute( agent ) )
+    {
+        if ( agent->world().gameMode().type() != GameMode::PlayOn
+             && agent->world().gameMode().type() != GameMode::GoalKick_ )
+        {
+            first_speed = std::min( agent->world().self().kickRate() * ServerParam::i().maxPower(),
+                                    first_speed );
+            Body_KickOneStep( target_point,
+                              first_speed
+                              ).execute( agent );
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    if ( agent->config().useCommunication()
+         && receiver != Unum_Unknown )
+    {
+        Vector2D target_buf = target_point - agent->world().self().pos();
+        target_buf.setLength( 1.0 );
+
+        agent->addSayMessage( new PassMessage( receiver,
+                                               target_point + target_buf,
+                                               agent->effector().queuedNextBallPos(),
+                                               agent->effector().queuedNextBallVel() ) );
+    }
+
+    return true;
+}
+
+
+
+bool
+SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
+    const WorldModel & wm = agent->world();
+
+    Vector2D myPosition = wm.self().pos();
+    Vector2D currentHole = RoundToNearestHole(myPosition);
+    Vector2D frontup = Vector2D(currentHole.x+10, currentHole.y-10);
+    Vector2D backup = Vector2D(currentHole.x-10, currentHole.y-10);
+    Vector2D frontdown = Vector2D(currentHole.x+10, currentHole.y+10);
+    Vector2D backdown = Vector2D(currentHole.x-10, currentHole.y+10);
+
+    Vector2D fronthor = Vector2D(currentHole.x+20, currentHole.y);
+    Vector2D backhor = Vector2D(currentHole.x-20, currentHole.y);
+    Vector2D upvert = Vector2D(currentHole.x, currentHole.y-20);
+    Vector2D downvert = Vector2D(currentHole.x, currentHole.y+20);
+    
+    double buffer = 2.5;
+    
+    //TODO: Return true only if pass is advantageous
+    
+    if( IsOccupiedForPassing(agent, frontup, buffer)||
+        IsOccupiedForPassing(agent, frontdown, buffer)||
+        IsOccupiedForPassing(agent, backup, buffer)||
+        IsOccupiedForPassing(agent, backdown, buffer)||
+        IsOccupiedForPassing(agent, fronthor, buffer)||
+        IsOccupiedForPassing(agent, upvert, buffer)||
+        IsOccupiedForPassing(agent, downvert, buffer)||
+        IsOccupiedForPassing(agent, backhor, buffer)
+        ){
+        return true;
+    }
+    
+    return false;   
+}
+
+int
+SamplePlayer::IsOccupiedForPassing(PlayerAgent * agent, Vector2D target, double buffer){
+    //Body_TurnToPoint( target ).execute( agent );
+    if(abs(target.x)>55 || abs(target.y)>35)
+        return 0;
+
+    Neck_TurnToPoint( target ).execute(agent );
+    const WorldModel & wm = agent->world();
+    
+    if ( target.x > wm.offsideLineX() + 1.0 ){
+        // offside players are rejected.
+        return false;
+    }
+    for(int i=2; i<=11; i++){
+        if(wm.ourPlayer(i)!=NULL){
+            Vector2D player_pos = wm.ourPlayer(i)->pos();
+            if( AreSamePoints(player_pos, target, buffer) && i!=wm.self().unum() )
+                return i;
+        }
+    }
+    return 0;
+}
+
+
+
 bool
 SamplePlayer::IsSectorEmpty(PlayerAgent * agent, Vector2D target, double buf_degree){
     Neck_TurnToPoint( target ).execute(agent );
@@ -695,6 +933,7 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
     // I have the ball, what to do?
     if ( kickable && !Opponenthasball)
     {
+	
         doKick( this);
                        
     }
@@ -1538,4 +1777,3 @@ SamplePlayer::createActionGenerator() const
 
     return ActionGenerator::ConstPtr( g );
 }
-
