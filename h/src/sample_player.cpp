@@ -166,6 +166,8 @@ SamplePlayer::SamplePlayer()
     M_communication = Communication::Ptr( new SampleCommunication() );
 }
 
+
+
 /*-------------------------------------------------------------------*/
 /*!
 
@@ -334,10 +336,10 @@ SamplePlayer::actionImpl()
         if ( kickable )
         {
             //Bhv_BasicMove().execute(this);
-            Bhv_BasicOffensiveKick().execute(this);
+           // Bhv_BasicOffensiveKick().execute(this);
         //    if(!PassToBestPlayer( this )){
         //        Body_HoldBall().execute( this );
-                //doKick( this);
+                doKick( this);
                 //Bhv_BasicOffensiveKick().execute(this);
                 //PassToBestPlayer(this);   
             //f}                
@@ -370,6 +372,47 @@ SamplePlayer::actionImpl()
         executeSampleRole(this);
         return;
     }
+}
+
+
+void
+runThrough(PlayerAgent * agent, Vector2D target) {
+//it gives position at which player and ball can meet togather
+	Body_TurnToBall().execute(agent);
+}
+
+double
+BallPassSpeed( const double & distance )
+{
+    if ( distance >= 20.0 )
+    {
+        //return 3.0;
+        return 2.5;
+    }
+    else if ( distance >= 8.0 )
+    {
+        //return 2.5;
+        return 2.0;
+    }
+    else if ( distance >= 5.0 )
+    {
+        return 1.8;
+    }
+    else
+    {
+        return 1.5;
+    }
+}
+
+void
+passThrough(PlayerAgent * agent, Vector2D target) {
+//it makes pass happen through/ between players
+	const WorldModel & wm = agent->world();
+
+	const int self_min = wm.interceptTable()->selfReachCycle();
+    const int mate_min = wm.interceptTable()->teammateReachCycle();
+    const int opp_min = wm.interceptTable()->opponentReachCycle();
+
 }
 
 
@@ -561,56 +604,6 @@ SamplePlayer::SampleDribble( PlayerAgent * agent )
     return true;
 }
 
-/*bool 
-SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
-    const WorldModel & wm = agent->world();
-
-    Vector2D myPosition = wm.self().pos();
-    Vector2D currentHole = RoundToNearestHole(myPosition);
-    Vector2D frontup = Vector2D(currentHole.x+10, currentHole.y-10);
-    Vector2D backup = Vector2D(currentHole.x-10, currentHole.y-10);
-    Vector2D frontdown = Vector2D(currentHole.x+10, currentHole.y+10);
-    Vector2D backdown = Vector2D(currentHole.x-10, currentHole.y+10);
-
-    Vector2D fronthor = Vector2D(currentHole.x+20, currentHole.y);
-    Vector2D backhor = Vector2D(currentHole.x-20, currentHole.y);
-    Vector2D upvert = Vector2D(currentHole.x, currentHole.y-20);
-    Vector2D downvert = Vector2D(currentHole.x, currentHole.y+20);
-    
-    double buffer = 2.5;
-    
-    //TODO: Return true only if pass is advantageous
-    
-    if( IsOccupiedForPassing(agent, frontup, buffer)||
-        IsOccupiedForPassing(agent, frontdown, buffer)||
-        IsOccupiedForPassing(agent, backup, buffer)||
-        IsOccupiedForPassing(agent, backdown, buffer)||
-        IsOccupiedForPassing(agent, fronthor, buffer)||
-        IsOccupiedForPassing(agent, upvert, buffer)||
-        IsOccupiedForPassing(agent, downvert, buffer)||
-        IsOccupiedForPassing(agent, backhor, buffer)
-        ){
-        return true;
-    }
-
-    /*
-    const WorldModel & world = agent->world();
-    const PlayerPtrCont::const_iterator 
-    t_end = world.teammatesFromSelf().end();
-    for ( PlayerPtrCont::const_iterator
-              it = world.teammatesFromSelf().begin();
-          it != t_end;
-          ++it )
-    {
-        if(((*it)->pos().dist(world.ball().pos()))<=20.0){
-            return false;
-        }  
-    }
-    
-    
-    return false;   
-}
-*/
 
 bool 
 SamplePlayer::isRTaHole(Vector2D P){
@@ -1001,6 +994,8 @@ SamplePlayer::doKick( PlayerAgent * agent )
 /*!
 
 */
+
+
 void
 SamplePlayer::doMove( PlayerAgent * agent )
 {
@@ -1777,3 +1772,4 @@ SamplePlayer::createActionGenerator() const
 
     return ActionGenerator::ConstPtr( g );
 }
+
