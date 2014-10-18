@@ -56,6 +56,7 @@
 #include "view_tactical.h"
 
 #include "intention_receive.h"
+#include "dribble.h"
 
 #include <rcsc/action/basic_actions.h>
 #include <rcsc/action/bhv_emergency.h>
@@ -337,12 +338,16 @@ SamplePlayer::actionImpl()
         {
             //Bhv_BasicMove().execute(this);
            // Bhv_BasicOffensiveKick().execute(this);
-        //    if(!PassToBestPlayer( this )){
-        //        Body_HoldBall().execute( this );
-                doKick( this);
+            if(!PassToBestPlayer( this )){
+                SampleDribble(this);
+                Body_HoldBall().execute( this );
+                //doKick( this);
                 //Bhv_BasicOffensiveKick().execute(this);
                 //PassToBestPlayer(this);   
-            //f}                
+            }    //f}
+            else {
+                doKick(this);
+            }                
         }
         else
         {
@@ -375,24 +380,22 @@ SamplePlayer::actionImpl()
 }
 
 
-void
-runThrough(PlayerAgent * agent, Vector2D target) {
+void runThrough(PlayerAgent * agent, Vector2D target) {
 //it gives position at which player and ball can meet togather
 	Body_TurnToBall().execute(agent);
 }
 
-double
-BallPassSpeed( const double & distance )
+double BallPassSpeed( const double & distance ) 
 {
     if ( distance >= 20.0 )
     {
-        //return 3.0;
-        return 2.5;
+        return 3.0;
+        //return 2.5;
     }
     else if ( distance >= 8.0 )
     {
-        //return 2.5;
-        return 2.0;
+        return 2.5;
+        //return 2.0;
     }
     else if ( distance >= 5.0 )
     {
@@ -926,16 +929,22 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
     // I have the ball, what to do?
     if ( kickable && !Opponenthasball)
     {
-	
-        doKick( this);
-                       
+        doKick(this);
     }
 
     //This is for off the ball movement which attacking, where to go for passes etc.
     else if (!kickable && !Opponenthasball)
     {   
-        doMove(this);
-        return true;
+        if(!PassToBestPlayer( this )){
+                //SampleDribble(this);
+                //Body_HoldBall().execute( this );
+                //doKick( this);
+                //doMove(this);
+                doMove(this);
+                return true;
+                //PassToBestPlayer(this);   
+            }    //f}
+        //dribble(this);
     } 
     //ATTACK ENDS HERE
     //--------XX----------XX--------//
