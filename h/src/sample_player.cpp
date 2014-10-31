@@ -338,16 +338,62 @@ SamplePlayer::actionImpl()
         {
             //Bhv_BasicMove().execute(this);
            // Bhv_BasicOffensiveKick().execute(this);
-            if(!PassToBestPlayer( this )){
-                SampleDribble(this);
-                Body_HoldBall().execute( this );
+             if(!PassToBestPlayer( this )){
+                const PlayerPtrCont & opps = wm.opponentsFromSelf();
+                const PlayerObject * nearest_opp = ( opps.empty()
+                                                    ? static_cast< PlayerObject * >( 0 ) 
+                                                    : opps.front() );
+                const double nearest_opp_dist = ( nearest_opp
+                                      ? nearest_opp->distFromSelf()
+                                      : 1000.0 );
+                const Vector2D nearest_opp_pos = ( nearest_opp
+                                       ? nearest_opp->pos()
+                                       : Vector2D( -1000.0, 0.0 ) );
+
+                while(!(abs(nearest_opp_pos.x-wm.self().pos().x)<2.0) && !(abs(nearest_opp_pos.y-wm.self().pos().y)>2.0)) {
+                    SampleDribble(this);
+                 
+                    Body_HoldBall().execute( this );
                 //doKick( this);
                 //Bhv_BasicOffensiveKick().execute(this);
                 //PassToBestPlayer(this);   
-            }    //f}
+                }
+                /*
+                const StrictCheckPassGenerator *st;
+                const StrictCheckPassGenerator::Receiver rc;
+                //const  *nearest_teammate = wm.getTeammateNearestToSelf( 10, false );
+                const PlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
+                const rc.AbstractPlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
+                if(nearest_teammate->distFromSelf()<20.0){
+                    st->createThroughPass(&wm, *nearest_teammate);
+                }*/
+                const PlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
+                const PlayerObject *nearest_teammate2 = wm.getTeammateNearestToBall( 15 );
+                const PlayerObject *nearest_teammate3 = wm.getTeammateNearestToBall( 20 );
+                if(wm.getTeammateNearestToBall( 10 )!=NULL){
+                    PassPlayersAvailable(this);
+                }
+                else if(wm.getTeammateNearestToBall( 15 )!=NULL){
+                    PassPlayersAvailable(this);
+                }
+                else if(wm.getTeammateNearestToBall( 20 )!=NULL){
+                    PassPlayersAvailable(this);
+                }
+                else{
+                    //Body_HoldBall().execute(this);
+                    doMove(this);
+                    Body_HoldBall().execute(this);
+                }
+
+
+/*                else{
+                    Body_HoldBall().execute(this);
+                }*/
+            }   //f}
             else {
-                doKick(this);
-            }                
+                PassToBestPlayer(this);
+                //doKick(this);
+            }   
         }
         else
         {
