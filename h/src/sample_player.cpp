@@ -382,7 +382,7 @@ SamplePlayer::actionImpl()
 
 void runThrough(PlayerAgent * agent, Vector2D target) {
 //it gives position at which player and ball can meet togather
-	Body_TurnToBall().execute(agent);
+    Body_TurnToBall().execute(agent);
 }
 
 double BallPassSpeed( const double & distance ) 
@@ -410,9 +410,9 @@ double BallPassSpeed( const double & distance )
 void
 passThrough(PlayerAgent * agent, Vector2D target) {
 //it makes pass happen through/ between players
-	const WorldModel & wm = agent->world();
+    const WorldModel & wm = agent->world();
 
-	const int self_min = wm.interceptTable()->selfReachCycle();
+    const int self_min = wm.interceptTable()->selfReachCycle();
     const int mate_min = wm.interceptTable()->teammateReachCycle();
     const int opp_min = wm.interceptTable()->opponentReachCycle();
 
@@ -805,14 +805,13 @@ SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
     double buffer = 2.5;
     
     //TODO: Return true only if pass is advantageous
-    
-    if( IsOccupiedForPassing(agent, frontup, buffer)||
+    if( IsOccupiedForPassing(agent, fronthor, buffer)||
         IsOccupiedForPassing(agent, frontdown, buffer)||
-        IsOccupiedForPassing(agent, backup, buffer)||
-        IsOccupiedForPassing(agent, backdown, buffer)||
-        IsOccupiedForPassing(agent, fronthor, buffer)||
+        IsOccupiedForPassing(agent, frontup, buffer)||
         IsOccupiedForPassing(agent, upvert, buffer)||
         IsOccupiedForPassing(agent, downvert, buffer)||
+        IsOccupiedForPassing(agent, backup, buffer)||
+        IsOccupiedForPassing(agent, backdown, buffer)||
         IsOccupiedForPassing(agent, backhor, buffer)
         ){
         return true;
@@ -929,7 +928,12 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
     // I have the ball, what to do?
     if ( kickable && !Opponenthasball)
     {
-        doKick(this);
+        if(agent->world().self().isKickable()){
+            doKick(this);
+        }
+        else{
+            PassPlayersAvailable(this);
+        }
     }
 
     //This is for off the ball movement which attacking, where to go for passes etc.
@@ -944,6 +948,9 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
                 return true;
                 //PassToBestPlayer(this);   
             }    //f}
+            else{
+                SampleDribble(this);
+            }
         //dribble(this);
     } 
     //ATTACK ENDS HERE
