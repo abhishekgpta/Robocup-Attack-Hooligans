@@ -1,0 +1,46 @@
+Team_name:- HOOLIGANS
+Project_name:- RoboSoccer ATTACK
+
+
+In sample_player code,
+
+> We have modified/implemented the following functions to get the structure of the strategy of our team while attack, defense or possession:-
+
+1. SamplePlayer::BallPassSpeed():- 
+	We modified the speed of the ball passing setting the favourable combinations out of combinations varying as per the velocity of the player and stamina/energy usage.
+
+2. SamplePlayer::executeSampleRole():- 
+	We modified the attack and defense part to define our strategy for the team.
+
+3. SamplePlayer::tackle():-
+	Implemented tackle function and chase the ball while the ball is with opponent.
+
+
+> We have simply added the following functions to add the functionalities as detailed below:-
+
+1. SamplePlayer::isRTaHole():- 
+	Checks if the coordinates forms a hole already or not.
+
+2. SamplePlayer::RoundToNearestHole():- 
+	Helps in transforming the coordinates to the holes in the diamond shape.
+
+3. SamplePlayer::RoundToNearestTens():- 
+	Rounds up the x- or y- coordinates to the nearest tens values which we find helpful in dividing the ground into the small blocks of same size.
+
+4. SamplePlayer::PassPlayersAvailable():-
+	Checks for any of the player available in every sector around the player containing the ball, and if finds even a single player available in any of them, returns true.
+
+5. SamplePlayer::PassToBestPlayer():-
+	Select the best player to pass if there exists any player to receive a pass and then calls the PassToPlayer().
+
+6. SamplePlayer::PassToPlayer():- 
+	Simply pass to the selected target player.	
+
+7. SamplePlayer::IsOccupiedForPassing():-
+	Checks in a particular sector for player and excludes all those players which aren't suitable to receive the pass and if any suitable left out, then returns its number.
+
+8. SamplePlayer::IsSectorEmpty():-
+	Checks if a sector is empty or not.
+
+9. SamplePlayer::ClosestPlayerToBall():-
+	Determining the closest player from the ball position.
