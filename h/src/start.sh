@@ -2,7 +2,7 @@
 
 echo "******************************************************************"
 echo " HOOLIGANS"
-echo " Created by Dakshal Shah and Sagar Maru"
+echo " Created by Dakshal Shah and Sagar Maru and Abhishek Gupta"
 echo " All rights reserved."
 echo "******************************************************************"
 
