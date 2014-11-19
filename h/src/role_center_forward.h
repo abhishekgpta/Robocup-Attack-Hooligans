@@ -64,6 +64,14 @@ private:
 
     void doKick( rcsc::PlayerAgent * agent );
     void doMove( rcsc::PlayerAgent * agent );
+    bool doPass(  rcsc::PlayerAgent * agent );
+    int ClosestPlayerToBall( rcsc::PlayerAgent * agent);
+    bool IsOccupiedForPassing( rcsc::PlayerAgent * agent, int ourPl);
+    bool PassToPoint(  rcsc::PlayerAgent * agent, int receiver );
+
+ 
+
+
 };
 
 
