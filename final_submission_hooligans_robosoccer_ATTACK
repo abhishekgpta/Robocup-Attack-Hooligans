@@ -12,8 +12,27 @@ In sample_player code,
 2. SamplePlayer::executeSampleRole():- 
 	We modified the attack and defense part to define our strategy for the team.
 
-3. SamplePlayer::tackle():-
-	Implemented tackle function and chase the ball while the ball is with opponent.
+3. SamplePlayer::ThroughPass():-
+	Implemented pass function by creating some fixed routes only to pass.
+
+4. SamplePlayer::PlayerNum():-
+	Calling different player roles according to their id number.
+
+5. SamplePlayer::PassToPoint():-
+	Passing at the selected point.
+
+6. SamplePlayer::PlayerPosition():-
+	Returns player position by their id number.
+
+7. ClosestPlayerToBall():-	/*for each player role*/
+	Returns the closest player to ball in a given radius for valid players only which are returned from IsOccupiedForPassing().
+
+8. IsOccupiedForPassing():-	/*for each player role*/
+	Modified for player validity with two arguments.
+
+9. doPass():-	/*for each player role*/
+	PassToPoint() called in all roles defined by taking arguments of agent pointer and receiver number.
+
 
 
 > We have simply added the following functions to add the functionalities as detailed below:-
