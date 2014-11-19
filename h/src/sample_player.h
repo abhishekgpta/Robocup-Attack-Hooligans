@@ -150,6 +150,17 @@ public:
     rcsc::Vector2D 
     calculate_placement_threat(rcsc::PlayerAgent * agent, rcsc::Vector2D P);
 
+    bool
+    AreSamePoints(rcsc::Vector2D A, rcsc::Vector2D B, double buffer);
+
+    bool
+    IsOccupied(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
+
+    bool
+    IsOccupiedWhileDashing(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
+
+    //int
+    //IsOccupiedForPassing(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
     rcsc::Vector2D 
     RoundToNearestTens(rcsc::Vector2D P);
     
@@ -162,21 +173,11 @@ public:
     rcsc::Vector2D 
     RoundToNearestHole(rcsc::Vector2D P);
 
-    bool
-    AreSamePoints(rcsc::Vector2D A, rcsc::Vector2D B, double buffer);
-
-    bool
-    IsOccupied(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
-
-    bool
-    IsOccupiedWhileDashing(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
-
     int
     IsOccupiedForPassing(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
 
-
-    int
-    GetOccupierUnum(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
+    rcsc::Vector2D
+    PlayerPosition(rcsc::PlayerAgent *agent , int unum);
 
     bool
     PassToBestPlayer(rcsc::PlayerAgent * agent);
@@ -185,13 +186,28 @@ public:
     PassToPlayer( rcsc::PlayerAgent * agent, rcsc::Vector2D target_point, int receiver );
 
     bool
+    PassToPoint( rcsc::PlayerAgent * agent, rcsc::Vector2D target_point, int receiver );
+
+    bool
+    PassPlayersAvailable(rcsc::PlayerAgent * agent);
+
+    bool
+    PlayerNum(rcsc::PlayerAgent * agent);
+
+    bool
+    ThroughPass( rcsc::PlayerAgent * agent);
+
+    int
+    GetOccupierUnum(rcsc::PlayerAgent * agent, rcsc::Vector2D target, double buffer);
+
+    bool
+    doPass();
+
+    bool
     DecideAndOccupyHole(rcsc::PlayerAgent * agent, int target);
 
     void
     OccupyHole(rcsc::Vector2D target);
-
-    bool
-    PassPlayersAvailable(rcsc::PlayerAgent * agent);
 
     bool
     AreSameNos(double A, double B, double buffer);
