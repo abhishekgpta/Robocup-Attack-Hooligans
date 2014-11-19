@@ -91,6 +91,14 @@
 #include <rcsc/common/audio_memory.h>
 #include <rcsc/common/say_message_parser.h>
 // #include <rcsc/common/free_message_parser.h>
+#include "role_center_back.h"
+#include "role_side_back.h"
+#include "role_center_forward.h"
+#include "role_side_forward.h"
+#include "role_side_half.h"
+#include "role_offensive_half.h"
+#include "role_goalie.h"
+//#include ""
 
 #include <rcsc/param/param_map.h>
 #include <rcsc/param/cmd_line_parser.h>
@@ -338,62 +346,18 @@ SamplePlayer::actionImpl()
         {
             //Bhv_BasicMove().execute(this);
            // Bhv_BasicOffensiveKick().execute(this);
-             if(!PassToBestPlayer( this )){
-                const PlayerPtrCont & opps = wm.opponentsFromSelf();
-                const PlayerObject * nearest_opp = ( opps.empty()
-                                                    ? static_cast< PlayerObject * >( 0 ) 
-                                                    : opps.front() );
-                const double nearest_opp_dist = ( nearest_opp
-                                      ? nearest_opp->distFromSelf()
-                                      : 1000.0 );
-                const Vector2D nearest_opp_pos = ( nearest_opp
-                                       ? nearest_opp->pos()
-                                       : Vector2D( -1000.0, 0.0 ) );
-
-                while(!(abs(nearest_opp_pos.x-wm.self().pos().x)<2.0) && !(abs(nearest_opp_pos.y-wm.self().pos().y)>2.0)) {
-                    SampleDribble(this);
-                 
-                    Body_HoldBall().execute( this );
-                //doKick( this);
-                //Bhv_BasicOffensiveKick().execute(this);
-                //PassToBestPlayer(this);   
-                }
-                /*
-                const StrictCheckPassGenerator *st;
-                const StrictCheckPassGenerator::Receiver rc;
-                //const  *nearest_teammate = wm.getTeammateNearestToSelf( 10, false );
-                const PlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
-                const rc.AbstractPlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
-                if(nearest_teammate->distFromSelf()<20.0){
-                    st->createThroughPass(&wm, *nearest_teammate);
-                }*/
-                const PlayerObject *nearest_teammate = wm.getTeammateNearestToBall( 10 );
-                const PlayerObject *nearest_teammate2 = wm.getTeammateNearestToBall( 15 );
-                const PlayerObject *nearest_teammate3 = wm.getTeammateNearestToBall( 20 );
-                if(wm.getTeammateNearestToBall( 10 )!=NULL){
-                    PassPlayersAvailable(this);
-                }
-                else if(wm.getTeammateNearestToBall( 15 )!=NULL){
-                    PassPlayersAvailable(this);
-                }
-                else if(wm.getTeammateNearestToBall( 20 )!=NULL){
-                    PassPlayersAvailable(this);
-                }
-                else{
-                    //Body_HoldBall().execute(this);
-                    doMove(this);
-                    Body_HoldBall().execute(this);
-                }
-
-
-/*                else{
-                    Body_HoldBall().execute(this);
-                }*/
-            }   //f}
-            else {
-                PassToBestPlayer(this);
+            if(!PassToBestPlayer( this )){
                 //doKick(this);
-            }   
+                //SampleDribble(this);
+                //Body_HoldBall().execute( this );
+                //doKick( this);
+                Bhv_BasicOffensiveKick().execute(this);
+                //PassToBestPlayer(this);   
+            }    //f}
+            else {
+                //doKick(this);
+                PassToBestPlayer(this);
+            }                
         }
         else
         {
@@ -766,6 +730,193 @@ SamplePlayer::PassToBestPlayer( PlayerAgent * agent ){
     return false;
 }
 
+bool
+SamplePlayer::ThroughPass( PlayerAgent * agent) {
+    double first_speed = ServerParam::i().ballSpeedMax()/ 1.1;
+    const WorldModel & wm = agent->world();
+
+    Vector2D myPosition = wm.self().pos();
+    // Player position according to nearest current hole
+    Vector2D frontup = Vector2D(myPosition.x+9, myPosition.y-4);
+    Vector2D frontdown = Vector2D(myPosition.x+9, myPosition.y+4);
+    Vector2D fronthor = Vector2D(myPosition.x+9, myPosition.y);
+
+    Vector2D frontup1 = Vector2D(myPosition.x+5, myPosition.y-2);
+    Vector2D frontdown1 = Vector2D(myPosition.x+5, myPosition.y+2);
+    Vector2D fronthor1 = Vector2D(myPosition.x+5, myPosition.y);
+    
+    double buffer = 2.5;
+    double buf_degree = 45;
+    bool var = true;
+
+    int firstFindPlayer = IsOccupiedForPassing(agent, frontdown1, buffer);
+    if(firstFindPlayer == 0){
+        firstFindPlayer = IsOccupiedForPassing(agent, frontup1,buffer);
+    }
+    if(firstFindPlayer == 0){
+        firstFindPlayer = IsOccupiedForPassing(agent, fronthor1,buffer);
+    }
+    if(firstFindPlayer == 0){
+        return false;
+    }
+
+    Vector2D tempPos = PlayerPosition(agent,firstFindPlayer);
+
+        std::cout<<"Through Pass Called"<<std::endl;
+        std::cout<<"*******************************************************************************"<<std::endl;
+    
+    if(tempPos.x>55 || tempPos.x<=-55 || tempPos.y>15 || tempPos.y<=-15)
+        return false;
+
+    if(!PassToPlayer(agent, tempPos, firstFindPlayer)){
+        return false;
+    }
+    else {
+        doPass();
+        std::cout<<"Pass Called"<<std::endl;
+        std::cout<<"*******************************************************************************"<<std::endl;
+        return true;
+    }
+/*
+    if(IsSectorEmpty(agent,fronthor, buf_degree) && IsOccupiedForPassing(agent, fronthor1, buffer)>1){
+            Neck_TurnToPoint(fronthor).execute(agent);
+            if(!PassToPoint(agent, fronthor, IsOccupiedForPassing(agent, fronthor1, buffer)))
+                var=false;
+    }
+    if(IsSectorEmpty(agent,frontdown, buf_degree) && var==false && IsOccupiedForPassing(agent, frontdown1, buffer)>6){
+            var=!var;
+            Neck_TurnToPoint(frontdown).execute(agent);
+            if(!PassToPoint(agent, frontdown, IsOccupiedForPassing(agent, frontdown1, buffer)))
+                var=false;
+
+    }
+    if(IsSectorEmpty(agent,frontup, buf_degree) && var==false && IsOccupiedForPassing(agent, frontup1, buffer)>6){
+            var=!var;
+            Neck_TurnToPoint(frontup).execute(agent);
+            if(!PassToPoint(agent, frontup, IsOccupiedForPassing(agent, frontup1, buffer)))
+                var=false;
+    }
+    */
+ //   return false;
+}
+
+bool
+SamplePlayer::PassToPoint( PlayerAgent * agent, Vector2D target_point, int receiver )
+{
+    double first_speed = ServerParam::i().ballSpeedMax()/ 1.1;
+
+    agent->debugClient().addMessage( "pass" );
+    agent->debugClient().setTarget( target_point );
+
+    int kick_step = ( agent->world().gameMode().type() != GameMode::PlayOn
+                      && agent->world().gameMode().type() != GameMode::GoalKick_
+                      ? 1
+                      : 1 );
+    if ( ! Body_SmartKick( target_point,
+                           first_speed,
+                           first_speed * 3,
+                           kick_step ).execute( agent ) )
+    {
+        if ( agent->world().gameMode().type() != GameMode::PlayOn
+             && agent->world().gameMode().type() != GameMode::GoalKick_ )
+        {
+            first_speed = std::min( agent->world().self().kickRate() * ServerParam::i().maxPower(),
+                                    first_speed );
+            Body_KickOneStep( target_point,
+                              first_speed * 3
+                              ).execute( agent );
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    if ( agent->config().useCommunication()
+         && receiver != Unum_Unknown )
+    {
+        Vector2D target_buf = target_point - agent->world().self().pos();
+        target_buf.setLength( 1.0 );
+
+        agent->addSayMessage( new PassMessage( receiver,
+                                               target_point + target_buf,
+                                               agent->effector().queuedNextBallPos(),
+                                               agent->effector().queuedNextBallVel() ) );
+    }
+
+    return true;
+}
+
+Vector2D
+SamplePlayer::PlayerPosition(PlayerAgent *agent , int unum){
+    int i=2;
+    for(; i<=11; i++){
+        //if(agent->world().ourPlayer(i).unum()==1)
+          //  return;
+        
+        if(agent->world().ourPlayer(i)->unum()==unum){
+            break;
+        }
+    }
+    Vector2D temp = Vector2D(agent->world().ourPlayer(i)->pos().x, agent->world().ourPlayer(i)->pos().y);
+    return temp;
+}
+
+bool
+SamplePlayer::PlayerNum(PlayerAgent * agent){
+        const WorldModel & wm = agent->world();
+
+    if(wm.self().unum() >0 && wm.self().unum() <12){
+        switch(wm.self().unum()){
+            case 2:
+                RoleCenterBack().execute(agent);
+                return true;
+            break;
+            case 3:
+                RoleCenterBack().execute(agent);
+                return true;
+            break;
+            case 4:
+                RoleSideBack().execute(agent);
+                return true;
+            break;
+            case 5:
+                RoleSideBack().execute(agent);
+                return true;
+            break;
+            case 6:
+                RoleOffensiveHalf().execute(agent);
+                return true;
+            break;
+            case 7:
+                RoleSideHalf().execute(agent);
+                return true;
+            break;
+            case 8:
+                RoleSideHalf().execute(agent);
+                return true;
+            break;
+            case 9:
+                RoleSideForward().execute(agent);
+                return true;
+            break;
+            case 10:
+                RoleSideForward().execute(agent);
+                return true;
+            break;
+            case 11:
+                RoleCenterForward().execute(agent);
+                return true;
+            break;
+            default: 
+                RoleGoalie().execute(agent);
+                return true;
+            break;
+        }
+    }
+    return false;
+}
+
 
 bool
 SamplePlayer::PassToPlayer( PlayerAgent * agent, Vector2D target_point, int receiver )
@@ -775,14 +926,13 @@ SamplePlayer::PassToPlayer( PlayerAgent * agent, Vector2D target_point, int rece
         return false;
     }
 
-    /*
-    if ( Bhv_ChainAction().execute( agent ) )
-    {
-        return true;
-    }
-    */
+    //if ( Bhv_ChainAction().execute( agent ) )
+    //{
+      //  return true;
+    //}
+    
 
-    double first_speed = ServerParam::i().ballSpeedMax()/1.1;
+    double first_speed = ServerParam::i().ballSpeedMax()/ 1.1;
 
     // evaluation
     //   judge situation
@@ -829,9 +979,6 @@ SamplePlayer::PassToPlayer( PlayerAgent * agent, Vector2D target_point, int rece
 
     return true;
 }
-
-
-
 bool
 SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
     const WorldModel & wm = agent->world();
@@ -865,11 +1012,10 @@ SamplePlayer::PassPlayersAvailable( PlayerAgent * agent ){
     
     return false;   
 }
-
 int
 SamplePlayer::IsOccupiedForPassing(PlayerAgent * agent, Vector2D target, double buffer){
     //Body_TurnToPoint( target ).execute( agent );
-    if(abs(target.x)>55 || abs(target.y)>35)
+    if(abs(target.x)>55 || abs(target.y)>15)
         return 0;
 
     Neck_TurnToPoint( target ).execute(agent );
@@ -912,20 +1058,46 @@ SamplePlayer::IsSectorEmpty(PlayerAgent * agent, Vector2D target, double buf_deg
 
 
 
-int
+/*
+
+int 
 SamplePlayer::ClosestPlayerToBall(PlayerAgent * agent){
-    double mindis = 999;
-    int mindisunum = -1;
+    double mindis = 20;
+    
+    int array[10], barray[10];
+    //int mindisunum;
     for(int i=2; i<=11; i++){
+        array[i]=0;
+        barray[i]=-999;
         if(agent->world().ourPlayer(i)!=NULL){
             if(agent->world().ourPlayer(i)->distFromBall() < mindis){
-                mindis = agent->world().ourPlayer(i)->distFromBall();
-                mindisunum = i;
+                //mindis = agent->world().ourPlayer(i)->distFromBall();
+                //mindisunum = i;
+
+                array[i]=i;
+                barray[i]=agent->world().ourPlayer(i)->distFromBall();
             }
         }
     }
-    return mindisunum;
+    
+    int tempp;
+    for(int i=0; array[i+1]!=0; i++){
+
+        if(barray[i]>barray[i+1])
+        {
+            tempp=barray[i+1];
+            barray[i+1]=barray[i];
+            barray[i]=tempp;
+
+            tempp=array[i+1];
+            array[i+1]=array[i];
+            array[i]=tempp;
+        }
+
+    }
+    return array[0];
 }
+*/
 
 
 //main function that will be used.
@@ -962,7 +1134,6 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
     if(agent->world().existKickableOpponent()){
         Opponenthasball = true;
     }
-
     //----------XX------------//
     //If you have taken attack, you will have comment out the attach functions are replace
     //them with your own, similarly if you have taken defense, you need to comment out the existing
@@ -975,28 +1146,39 @@ SamplePlayer::executeSampleRole( PlayerAgent * agent )
     if ( kickable && !Opponenthasball)
     {
         if(agent->world().self().isKickable()){
-            doKick(this);
+            PlayerNum(agent);
         }
         else{
-            PassPlayersAvailable(this);
+            PlayerNum(agent);
         }
     }
 
     //This is for off the ball movement which attacking, where to go for passes etc.
     else if (!kickable && !Opponenthasball)
     {   
-        if(!PassToBestPlayer( this )){
+            PlayerNum(agent);
+
+/*        if(!ThroughPass( agent )){
                 //SampleDribble(this);
                 //Body_HoldBall().execute( this );
                 //doKick( this);
                 //doMove(this);
-                doMove(this);
-                return true;
+            if(!PassToPlayer(this)){
+                //while(!PassPlayersAvailable(this))
+                //    Body_HoldBall().execute(this);
+                //    SampleDribble(agent);
+                doMove(agent);
+                //return true;
                 //PassToBestPlayer(this);   
             }    //f}
-            else{
-                SampleDribble(this);
-            }
+            //doMove(this);
+*/
+        //}
+       /* else{
+            SampleDribble(agent);
+            //doMove(world().theirOffensePlayerLineX());
+            //doMove(rcsc::PlayerAgent *agent);
+        }*/
         //dribble(this);
     } 
     //ATTACK ENDS HERE
@@ -1064,6 +1246,14 @@ SamplePlayer::doMove( PlayerAgent * agent )
         Bhv_BasicMove().execute(agent);
         return;
 }
+
+
+bool
+SamplePlayer::doPass()
+{
+    return true;
+}
+
 
 bool
 SamplePlayer::BasicMove(PlayerAgent * agent){
@@ -1569,7 +1759,7 @@ SamplePlayer::doPreprocess()
     //
     // check shoot chance
     //
-    
+
     if ( doShoot() )
     {
         std::cout<<"doShoot"<<std::endl;
@@ -1578,6 +1768,10 @@ SamplePlayer::doPreprocess()
         return true;
     }
     
+    if(doPass()){
+        std::cout<<"Through Pass Called By Process"<<std::endl;
+        std::cout<<"*******************************************************************************"<<std::endl;
+    }
 
     //
     // check queued action
@@ -1834,4 +2028,3 @@ SamplePlayer::createActionGenerator() const
 
     return ActionGenerator::ConstPtr( g );
 }
-
