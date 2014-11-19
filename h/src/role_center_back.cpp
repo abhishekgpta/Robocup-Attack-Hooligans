@@ -28,16 +28,15 @@
 #include <config.h>
 #endif
 
-#include "role_center_forward.h"
-#include <rcsc/action/body_smart_kick.h>
+#include "role_center_back.h"
 #include "sample_player.h"
-
-#include <vector> 
 
 #include "bhv_chain_action.h"
 #include "bhv_basic_offensive_kick.h"
 #include <rcsc/action/body_kick_one_step.h>
 #include "bhv_basic_move.h"
+#include <rcsc/action/body_smart_kick.h>
+#include <vector> 
 
 #include <rcsc/player/player_agent.h>
 #include <rcsc/player/debug_client.h>
@@ -46,15 +45,15 @@
 
 using namespace rcsc;
 
-const std::string RoleCenterForward::NAME( "CenterForward" );
+const std::string RoleCenterBack::NAME( "CenterBack" );
 
 /*-------------------------------------------------------------------*/
 /*!
 
  */
 namespace {
-rcss::RegHolder role = SoccerRole::creators().autoReg( &RoleCenterForward::create,
-                                                       RoleCenterForward::NAME );
+rcss::RegHolder role = SoccerRole::creators().autoReg( &RoleCenterBack::create,
+                                                       RoleCenterBack::NAME );
 }
 
 /*-------------------------------------------------------------------*/
@@ -62,7 +61,7 @@ rcss::RegHolder role = SoccerRole::creators().autoReg( &RoleCenterForward::creat
 
  */
 bool
-RoleCenterForward::execute( PlayerAgent * agent )
+RoleCenterBack::execute( PlayerAgent * agent )
 {
     bool kickable = agent->world().self().isKickable();
     if ( agent->world().existKickableTeammate()
@@ -71,6 +70,7 @@ RoleCenterForward::execute( PlayerAgent * agent )
     {
         kickable = false;
     }
+
     if(agent->world().self().pos().x>40 && agent->world().self().pos().y<5 && agent->world().self().pos().y>-5){
         kickable = false;
         doKick(agent);
@@ -92,8 +92,12 @@ RoleCenterForward::execute( PlayerAgent * agent )
     return true;
 }
 
+/*-------------------------------------------------------------------*/
+/*!
+
+ */
 void
-RoleCenterForward::doKick( PlayerAgent * agent )
+RoleCenterBack::doKick( PlayerAgent * agent )
 {
     if ( Bhv_ChainAction().execute( agent ) )
     {
@@ -111,13 +115,14 @@ RoleCenterForward::doKick( PlayerAgent * agent )
 
  */
 void
-RoleCenterForward::doMove( PlayerAgent * agent )
+RoleCenterBack::doMove( PlayerAgent * agent )
 {
     Bhv_BasicMove().execute( agent );
 }
 
+
 bool
-RoleCenterForward::PassToPoint( PlayerAgent * agent, int receiver )
+RoleCenterBack::PassToPoint( PlayerAgent * agent, int receiver )
 {
     double first_speed = ServerParam::i().ballSpeedMax()/ 1.1;
     if(receiver<0||receiver>12){
@@ -169,18 +174,20 @@ RoleCenterForward::PassToPoint( PlayerAgent * agent, int receiver )
 }
 
 bool
-RoleCenterForward::doPass( PlayerAgent * agent )
+RoleCenterBack::doPass( PlayerAgent * agent )
 {
     return SamplePlayer().PassToBestPlayer(agent);
 }
 
 int 
-RoleCenterForward::ClosestPlayerToBall(PlayerAgent * agent){
+RoleCenterBack::ClosestPlayerToBall(PlayerAgent * agent){
     double mindis = 20;
     
     int array[10] = {0}, barray[10] = {-999};
     //int mindisunum;
     for(int i=2; i<=11; i++){
+        //array[i];
+        //barray[i]=-999;
         if(agent->world().ourPlayer(i)!=NULL){
             if(agent->world().ourPlayer(i)->distFromBall() < mindis && IsOccupiedForPassing(agent, i)){
                 //mindis = agent->world().ourPlayer(i)->distFromBall();
@@ -214,12 +221,12 @@ RoleCenterForward::ClosestPlayerToBall(PlayerAgent * agent){
 }
 
 bool
-RoleCenterForward::IsOccupiedForPassing(PlayerAgent * agent, int ourPl){
+RoleCenterBack::IsOccupiedForPassing(PlayerAgent * agent, int ourPl){
     //Body_TurnToPoint( target ).execute( agent );
-       if(ourPl<0||ourPl>12){
+        if(ourPl<0||ourPl>12){
         return false;
     }
- Vector2D target = Vector2D(agent->world().ourPlayer(ourPl)->pos().x, agent->world().ourPlayer(ourPl)->pos().y);
+Vector2D target = Vector2D(agent->world().ourPlayer(ourPl)->pos().x, agent->world().ourPlayer(ourPl)->pos().y);
     if(abs(target.x)>55 || abs(target.y)>15)
         return 0;
 
